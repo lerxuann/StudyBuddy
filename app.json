@@ -1,7 +1,8 @@
 {
   "expo": {
-    "name": "orbital-app",
-    "slug": "orbital-app",
+    "name": "studybuddy",
+    "scheme": "studybuddy",
+    "slug": "part-two-final",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -21,10 +22,27 @@
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
-      }
+      },
+      "permissions": [
+        "android.permission.RECORD_AUDIO"
+      ],
+      "package": "com.lerxuan.studybuddy"
     },
     "web": {
       "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "The app accesses your photos to let you add to your profile."
+        }
+      ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "0f6c34e3-b265-4126-badd-091ad5a64223"
+      }
     }
   }
 }
