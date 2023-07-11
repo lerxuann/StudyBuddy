@@ -1,14 +1,15 @@
-import { View, Text, ScrollView, Image } from 'react-native';
+import { View, Text, ScrollView, Image, Button } from 'react-native';
 import { supabase } from '../../lib/supabase';
 import { useEffect, useState } from 'react';
 import { useAuth } from "../../contexts/auth";
-import { Button } from 'react-native-paper';
-import { Link } from "expo-router";
+import { useRouter } from "expo-router";
 
 export default function MatchScreen() {
     const [profiles, setProfiles] = useState([]);
     const { user } = useAuth();
     const [major, setMajor] = useState(null);
+    const [name, setName] = useState('');
+    const router = useRouter();
   
     useEffect(() => {
       const fetchMajor = async () => {
@@ -18,20 +19,20 @@ export default function MatchScreen() {
         if (error) { console.error(error);
         } else { setMajor(data[0].major); }
       };
-    fetchMajor();
-  
-      // Subscribe to real-time updates
-      // const subscription = supabase
-      //   .from('chat_messages')
-      //   .on('INSERT', (payload) => {
-      //     setMessages((prevMessages) => [...prevMessages, payload.new]);
-      //   })
-      //   .subscribe();
-  
-      // // Clean up the subscription
-      // return () => {
-      //   subscription.unsubscribe();
-      // };
+      const fetchName = async () => {
+        const { data, error } = await supabase.from('user_profiles')
+          .select('name')
+          .eq('user_id', user.id);
+          
+        if (error) {
+          console.error(error);
+        } else {
+          setName(data[0].name);
+        }
+      };
+      
+      fetchName();
+      fetchMajor();
     }, []);
 
     useEffect(() => {
@@ -49,6 +50,28 @@ export default function MatchScreen() {
   
       fetchMatchingProfiles();
     }, [major]);
+
+    const startChat = async ( receiverId, receiverName ) => {
+      let firstParticipant, secondParticipant;
+      if (user.id < receiverId ) {
+        firstParticipant = user.id;
+        secondParticipant = receiverId;
+      } else {
+        firstParticipant = receiverId;
+        secondParticipant = user.id;
+      }
+
+      const { error } = await supabase.from("chats")
+      .upsert(
+        { participants_id: [firstParticipant, secondParticipant], receiver_name: receiverName, sender_name: name },
+        { onConflict: 'participants_id'}
+      ).select();
+      
+      if (error) {
+        console.error(error);
+      }
+      router.push('/chat');
+    };
   
     const renderProfileItem = ({ item }) => (
       <View style={{ padding: 10, backgroundColor: 'pink', alignItems: 'center' }}>
@@ -61,9 +84,7 @@ export default function MatchScreen() {
         <Text>Major: {item.major}</Text>
         <Text>Modules: {item.modules}</Text>
         <Text>Description: {item.description}</Text>
-        <Link href="/chat">
-          <Button>Study together?</Button>
-        </Link>
+        <Button title="Study together?" onPress={() => startChat(item.user_id, item.name)} />
       </View>
     );
   

@@ -51,12 +51,12 @@ export default function LoginPage() {
                 onChangeText={setPassword} />
                 </View>
             </View>
-            <Button onPress={handleSubmit}>Sign in</Button>
+            <Button onPress={handleSubmit}> Sign in</Button>
             {errMsg !== "" && <Text>{errMsg}</Text>}
             {loading && <ActivityIndicator />}
             <View style={{ marginBottom: 10}}>
             <Link href="/register">
-                <Button> No account? Register here! </Button>
+                <Button> Dont have an account? Register here! </Button>
             </Link>
             </View>
         </KeyboardAvoidingView>
