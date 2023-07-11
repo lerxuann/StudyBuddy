@@ -53,6 +53,10 @@ export default function EditProfile() {
           setErrMsg('Major cannot be empty')
           return;
         }
+        if (major.endsWith(' ')) {
+          setErrMsg('Please remove the space at the end of your major');
+          return;
+        }
         if (!Number.isInteger(yearOfStudy) && yearOfStudy > 5) {
           setErrMsg('Year of study must be an integer less than 6')
           return;
@@ -96,7 +100,7 @@ export default function EditProfile() {
         }
 
         setLoading(false);
-        router.push('/profile');
+        router.push('/editProfile');
     }
   
     const handleImageSelection = async () => {
@@ -106,8 +110,7 @@ export default function EditProfile() {
         aspect: [4, 4],
         quality: 1,
       });
-
-console.log(result)
+      console.log(result)
   
       if (!result.canceled) {
         setSelectedImage(result.assets[0].uri);
@@ -212,6 +215,7 @@ console.log(result)
                   value={name}
                   onChangeText={(value) => setName(value)}
                   editable={true}
+                  placeholder="Enter your name"
                 />
               </View>
             </View>
@@ -240,6 +244,7 @@ console.log(result)
                   value={yearOfStudy}
                   onChangeText={(value) => setYearOfStudy(value)}
                   editable={true}
+                  placeholder="Numerics only"
                 />
               </View>
             </View>
@@ -250,7 +255,7 @@ console.log(result)
                 marginBottom: 6,
               }}
             >
-              <Text>Major - No abbreviations + capitalised, eg. Communications And New Media</Text>
+              <Text>Major - No abbreviations and Capitalised </Text>
               <View
                 style={{
                   height: 44,
@@ -259,18 +264,17 @@ console.log(result)
                   borderWidth: 1,
                   borderRadius: 4,
                   marginVertical: 6,
-
-
-justifyContent: "center",
+                  justifyContent: "center",
                   paddingLeft: 8,
                   backgroundColor: 'lavenderblush'
                 }}
               >
                 <TextInput
-                  autoCapitalize='words'
                   value={major}
+                  autoCapitalize = "words"
                   onChangeText={(value) => setMajor(value)}
                   editable={true}
+                  placeholder="eg. Communications And New Media"
                 />
               </View>
             </View>
@@ -300,6 +304,7 @@ justifyContent: "center",
                   value={modules}
                   onChangeText={(value) => setModules(value)}
                   editable={true}
+                  placeholder="eg. GEA1000"
                 />
               </View>
             </View>
@@ -329,6 +334,7 @@ justifyContent: "center",
                 onChangeText={(value) => setDescription(value)}
                 editable={true}
                 multiline = {true}
+                placeholder="Write a short description about yourself"
               />
             </View>
           </View>

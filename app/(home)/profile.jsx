@@ -1,29 +1,66 @@
-import { useEffect, useState } from 'react';
 import { View, Text, Image } from 'react-native';
 import { supabase } from "../../lib/supabase";
 import { useAuth } from "../../contexts/auth";
 import { Button } from 'react-native-paper';
 import { Link } from "expo-router";
-
+import { useEffect, useState } from 'react';
 const UserProfileTab = () => {
   const [profiles, setProfiles] = useState([]);
   const { user } = useAuth();
 
   useEffect(() => {
-    // Fetch the user profiles from Supabase
+
+
     const fetchProfiles = async () => {
       const { data, error } = await supabase.from('user_profiles')
-      .select('*').eq('user_id', user.id);
-      
+        .select('*').eq('user_id', user.id);
+
       if (error) {
         console.error(error);
       } else {
         setProfiles(data);
       }
     };
+    const channel = supabase
+      .channel('schema-db-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'user_profiles',
+          condition: `new.user_id = '${user.id}'`, // Filter changes by user_id
+        },
+        (payload) => {
+          const { new: newProfile, old: oldProfile, event_type } = payload;
 
+          if (event_type === 'INSERT') {
+            setProfiles((prevProfiles) => [...prevProfiles, newProfile]);
+          } else if (event_type === 'UPDATE') {
+            setProfiles((prevProfiles) =>
+              prevProfiles.map((profile) =>
+                profile.id === newProfile.id ? newProfile : profile
+              )
+            );
+          } else if (event_type === 'DELETE') {
+            setProfiles((prevProfiles) =>
+              prevProfiles.filter((profile) => profile.id !== oldProfile.id)
+            );
+          }
+        }
+      )
+      .subscribe();
+
+    // Fetch the initial user profiles
     fetchProfiles();
+
+    // Clean up the channel subscription when the component unmounts
+    return () => {
+      channel.unsubscribe();
+    };
   }, []);
+
+
 
   const renderProfileItem = ({ item }) => (
     <View style={{ padding: 30, backgroundColor: 'pink' }}>
@@ -68,7 +105,7 @@ const UserProfileTab = () => {
           <View style={{ height: 120, width: "100%", borderColor:'gray',
             borderWidth: 1, borderRadius: 4, marginVertical: 6, justifyContent: "center",
             paddingLeft: 8, paddingRight: 8, backgroundColor: 'lavenderblush'}} >
-            <Text>{item.description}</Text>
+<Text>{item.description}</Text>
           </View>
       </View>
     </View>
@@ -88,7 +125,7 @@ const UserProfileTab = () => {
         <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: 'pink' }}>
           <Text>You do not have a profile yet!</Text>
           <Text>Create your profile, then refresh your app to see it</Text>
-          <Link href="/editProfile">
+          <Link href="/EditProfile">
             <Button>Create your profile</Button>
           </Link>
         </View>

@@ -1,25 +1,27 @@
 import { useState, useEffect } from 'react';
-import { View, Text, FlatList, TextInput, Button, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, Text, ScrollView, KeyboardAvoidingView, Platform, TextInput } from 'react-native';
 import { supabase } from "../../lib/supabase";
 import { useAuth } from "../../contexts/auth";
+import { Link } from 'expo-router';
 
 const ChatScreen = () => {
-  const [messages, setMessages] = useState([]);
-  const [newMessage, setNewMessage] = useState('');
+  const [chats, setChats] = useState([]);
   const [name, setName] = useState('');
+  const [searchText, setSearchText] = useState('');
   const { user } = useAuth();
 
   useEffect(() => {
     const fetchChatHistory = async () => {
       const { data, error } = await supabase
-        .from('chat_messages')
+        .from('chats')
         .select('*')
-        .order('timestamp', { ascending: true });
+        .overlaps('participants_id', [user.id])
+        .order('created_at', { ascending: true });
 
       if (error) {
         console.error('Error fetching chat history:', error);
       } else {
-        setMessages(data);
+        setChats(data);
       }
     };
 
@@ -39,19 +41,34 @@ const ChatScreen = () => {
     fetchChatHistory();
   }, []);
 
-  const handleSendMessage = async () => {
-    if (newMessage.trim() === '') return;
-
-    const { error } = await supabase.from('chat_messages').insert([
-      { sender_id: name, message: newMessage.trim() },
-    ]);
-
-    if (error) {
-      console.error('Error sending message:', error);
-    } else {
-      setNewMessage('');
+  const filterChats = () => {
+    if (searchText.trim() === '') {
+      return chats;
     }
+
+    const filteredChats = chats.filter((chat) => {
+      const participantName = name === chat.sender_name ? chat.receiver_name : chat.sender_name;
+      return participantName.toLowerCase().includes(searchText.toLowerCase());
+    });
+
+    return filteredChats;
   };
+
+  const renderChats = ({ item }) => (
+    <View>
+      <View style={{ padding: 10, backgroundColor: 'pink', alignItems: 'center' }}>
+        <Link
+          href={{
+            pathname: "/chatMessages",
+            params: { chatId: item.chat_id, receiverName: name === item.sender_name ? item.receiver_name : item.sender_name }
+          }}
+        >
+          <Text style={{ fontSize: 15 }}>{name === item.sender_name ? item.receiver_name : item.sender_name}</Text>
+        </Link>
+      </View>
+      <View style={{ height: 1, backgroundColor: 'black', marginVertical: 8, marginLeft: 0 }} />
+    </View>
+  );
 
   return (
     <KeyboardAvoidingView
@@ -59,30 +76,29 @@ const ChatScreen = () => {
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       keyboardVerticalOffset={Platform.OS === 'ios' ? 100 : 0}
     >
-      <Text style={{ fontSize: 18, fontWeight: 'bold', marginBottom: 8 }}>
-        Chat Messages
+      <Text style={{ fontSize: 15, fontWeight: 'bold', marginBottom: 8 }}>
+        Click on the chats below to talk!
       </Text>
-      <FlatList
-        data={messages}
-        renderItem={({ item }) => (
-          <View style={{ marginBottom: 8 }}>
-            <Text>{item.sender_id}: {item.message}</Text>
-            <Text>Timestamp: {item.timestamp}</Text>
-          </View>
-        )}
-        keyExtractor={(item) => item.id.toString()}
+      <TextInput
+        style={{ borderWidth: 1, borderColor: 'gray', padding: 8, marginBottom: 8, backgroundColor: 'lavenderblush' }}
+        placeholder="Search chats"
+        value={searchText}
+        onChangeText={setSearchText}
       />
-      <View style={{ flexDirection: 'row', marginTop: 16, marginBottom: 15}}>
-        <TextInput
-          style={{ flex: 1, marginRight: 8, padding: 8, borderWidth: 1, maxHeight: 100, backgroundColor: 'lavenderblush'}}
-          placeholder="Type your message..."
-          value={newMessage}
-          onChangeText={setNewMessage}
-          multiline={true}
-          // Adjust the height of the TextInput container to make it scrollable
-        />
-        <Button title="Send" onPress={handleSendMessage} />
-      </View>
+      {chats.length ? (
+        <ScrollView>
+        {filterChats().map((chat, index) => (
+          <View key={index}>
+            {renderChats({ item: chat })}
+          </View>
+        ))}
+        </ScrollView>
+      ) : (
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: 'pink' }}>
+          <Text>No chats right now :(</Text>
+          <Text>Find new study buddies under the Match tab!</Text>
+        </View>
+      )}
     </KeyboardAvoidingView>
   );
 };
