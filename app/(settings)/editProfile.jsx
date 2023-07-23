@@ -100,7 +100,7 @@ export default function EditProfile() {
         }
 
         setLoading(false);
-        router.push('/editProfile');
+        router.push('/profile');
     }
   
     const handleImageSelection = async () => {

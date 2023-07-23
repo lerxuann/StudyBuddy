@@ -1,6 +1,7 @@
 import { Tabs } from "expo-router";
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 
+//handle tab icons and names on the bottom tab of app
 export default function HomeScreen() {
   return (
     <Tabs>
