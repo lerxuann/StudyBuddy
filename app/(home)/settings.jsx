@@ -3,7 +3,8 @@ import { Link } from "expo-router";
 import { supabase } from '../../lib/supabase';
 import { Button } from 'react-native-paper';
 
-export default function ProfileScreen() {
+//settings page allows users to either edit profile, or log out of their account
+export default function SettingsScreen() {
     return (
         <View style={{ flex: 1, justifyContent: 'center', 
         alignItems: 'center', backgroundColor: 'pink' }}>
